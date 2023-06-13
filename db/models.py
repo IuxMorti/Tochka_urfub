@@ -14,7 +14,7 @@ class Base(DeclarativeBase):
 class User(SQLAlchemyBaseUserTableUUID, Base):
     id: Mapped[uuid.UUID] = mapped_column(alchemy.UUID, primary_key=True, default=uuid.uuid4)
     url_photo: Mapped[str] = mapped_column(alchemy.String, nullable=True)
-    username: Mapped[str] = mapped_column(alchemy.String(length=127), unique=True, nullable=False, index=True)
+    username: Mapped[str] = mapped_column(alchemy.String(length=127), nullable=False)
     register_date: Mapped[datetime.datetime] = mapped_column(alchemy.TIMESTAMP, default=datetime.datetime.utcnow)
 
 

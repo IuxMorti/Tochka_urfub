@@ -5,10 +5,8 @@ services:
   db:
     image: postgres:15-alpine
     restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - .env
 
     volumes: 
       - db:/var/lib/postgresql/data
@@ -20,6 +18,7 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
     volumes: 
       - cache:/data
+
 
   urfube:
     build:
@@ -33,6 +32,12 @@ services:
     depends_on:
       - db
       - cache
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 1234:8080
 
 volumes:
   db:
