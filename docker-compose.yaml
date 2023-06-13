@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - ${DB_PORT}:5432
+    volumes: 
+      - db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    networks:
+      - custom
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - ${REDIS_PORT}:6379
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
+    volumes: 
+      - cache:/data
+    networks:
+      - custom
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 1234:8080
+    networks:
+      - custom
+networks:
+  custom:
+    driver: bridge
+volumes:
+  db:
+    driver: local
+  cache:
+    driver: local
