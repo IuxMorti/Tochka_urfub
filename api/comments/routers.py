@@ -6,6 +6,7 @@ comments_api = APIRouter(
 )
 
 
-#@comments_api.get()
+#@comments_api.get("/")
+#async def get_comments()
 
 #likes, dislikes, write, change, get_coments, likes

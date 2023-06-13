@@ -1,4 +1,7 @@
+version: "3.7"
 services:
+
+
   db:
     image: postgres:15-alpine
     restart: always
@@ -6,33 +9,31 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - ${DB_PORT}:5432
+
     volumes: 
       - db:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
-    networks:
-      - custom
+
   cache:
     image: redis:6.2-alpine
     restart: always
-    ports:
-      - ${REDIS_PORT}:6379
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
     volumes: 
       - cache:/data
-    networks:
-      - custom
-  adminer:
-    image: adminer
-    restart: always
+
+  urfube:
+    build:
+      context: .
+    env_file:
+      - .env
+    container_name: urfube
+    command: sh -c "alembic upgrade head && gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
-      - 1234:8080
-    networks:
-      - custom
-networks:
-  custom:
-    driver: bridge
+      - 9999:8000
+    depends_on:
+      - db
+      - cache
+
 volumes:
   db:
     driver: local

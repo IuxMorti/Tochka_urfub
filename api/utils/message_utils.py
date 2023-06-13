@@ -2,6 +2,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from fastapi import HTTPException
+
 from config import EMAIL_ADDRESS, EMAIL_PASS, APP_HOST, APP_PORT
 
 
@@ -48,4 +50,4 @@ def send(text, email):
         server.login(msg['From'], EMAIL_PASS)
         server.sendmail(msg["From"], msg["To"], msg.as_string())
     except Exception as ex:
-        print(ex)
+        raise HTTPException(400, ex.args)
