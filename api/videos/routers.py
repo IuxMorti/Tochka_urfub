@@ -39,23 +39,25 @@ async def my_videos(
         page_params: dict = Depends(pagination_params),
         db: AsyncSession = Depends(get_async_session),
         user: User = Depends(fastapi_users.current_user(active=True)),
-        red: redis.Redis = Depends(get_redis_async_session)) -> list[VideoModel]:
+        red: redis.Redis = Depends(get_redis_async_session)) -> VideoList:
     res = await db.execute(select(Video).where(Video.owner_id == user.id)
                            .offset(page_params["offset"]).limit(page_params["limit"]))
+    total = await db.execute(select(sqlalchemy.func.count()).select_from(Video).where(Video.owner_id == user.id)
+                             .offset(page_params["offset"]).limit(page_params["limit"]))
 
-    return [await video_to_model_video(video, red) for video in res.scalars().all()]
+    return VideoList(videos=[await video_to_model_video(video, red) for video in res.scalars().all()],
+                     total=total.scalar())
 
 
 @videos_api.get("/")
 async def get_videos(page_params: dict = Depends(pagination_params),
                      db: AsyncSession = Depends(get_async_session),
                      red: redis.Redis = Depends(get_redis_async_session)) -> VideoList:
-    videos = await db.execute(
-        select(Video).where(not Video.is_private).offset(page_params["offset"]).limit(page_params["limit"]))
+    videos = (await db.execute(
+        select(Video).where(Video.is_private == False).offset(page_params["offset"]).limit(page_params["limit"])))
     total = await db.execute(
         select(sqlalchemy.func.count()).select_from(Video).where(Video.is_private == False).offset(
             page_params["offset"]).limit(page_params["limit"]))
-
     return VideoList(videos=[await video_to_model_video(video, red) for video in videos.scalars().all()],
                      total=total.scalar())
 
