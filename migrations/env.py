@@ -21,7 +21,7 @@ config.set_section_option(section, "DB_PASS", DB_PASS)
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
+print(DB_HOST, DB_PORT, DB_USER, DB_NAME, DB_PASS)
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
