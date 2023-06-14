@@ -12,7 +12,7 @@ def send_verify_message(token, email):
       <body>
       <p>Здравствуйте. Вы прошли регистрацию на сайте brave-urfub.</p>
       <p>
-        пройдите по ссылке: <a href='http://localhost:5555/verificacion/{token}'>http://localhost:5555/verificacion/{token}</a>,
+        пройдите по ссылке: <a href='http://{APP_HOST}:{APP_PORT}/verificacion/{token}'>http://{APP_HOST}:{APP_PORT}g/verificacion/{token}</a>,
          чтобы подтверить вашу учетную запись.
       </p>
       <p> Если вы не регистрировались на сайте, то проигнорируйте данное сообщение. </p>
