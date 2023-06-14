@@ -22,7 +22,7 @@ async def get_comments(video_id: uuid.UUID,
             for comment in (await db.execute(select(Comment).where(Comment.video_id == video_id))).scalars().all()]
 
 
-@comments_api.post("/for_video/{video_id}", status_code=201)
+@comments_api.post("/{video_id}", status_code=201)
 async def add_comment(video_id: uuid.UUID,
                       comment: CreateComment,
                       user: User = Depends(fastapi_users.current_user(active=True, verified=True)),
