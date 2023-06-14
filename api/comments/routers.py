@@ -31,7 +31,7 @@ async def add_comment(video_id: uuid.UUID,
     if flag is None:
         raise HTTPException(404)
 
-    db.add(Comment(user_id=user.id, video_id=comment.video_id, text=comment.text))
+    db.add(Comment(user_id=user.id, video_id=video_id, text=comment.text))
     await db.commit()
 
 
