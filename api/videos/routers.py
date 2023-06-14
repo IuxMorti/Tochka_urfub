@@ -134,6 +134,7 @@ async def get_video(_id: uuid.UUID,
             raise HTTPException(403)
     else:
         res = jwt.decode(auth_token.split()[1], key=SECRET, algorithms=["HS256"], audience=["fastapi-users:auth"])
+        print(res)
         if video.is_private and uuid.UUID(res["sub"]) != video.owner_id:
             raise HTTPException(403)
         await red.sadd(RedisKeys.video_views(video.id), res["sub"])
@@ -142,7 +143,7 @@ async def get_video(_id: uuid.UUID,
     return await video_to_model_video(video, red)
 
 
-@videos_api.post("/{_id}/like", status_code=204)
+@videos_api.post("/{_id}/like")
 async def like(_id: uuid.UUID, red: redis.Redis = Depends(get_redis_async_session),
                db: AsyncSession = Depends(get_async_session),
                user: User = Depends(fastapi_users.current_user(active=True))):
