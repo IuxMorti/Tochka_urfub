@@ -15,7 +15,7 @@ from api.auth.routers import fastapi_users
 from api.common.schemes import pagination_params
 from api.utils.redis_utils import RedisKeys
 from api.utils.s3_utils import upload_video, upload_image
-from api.videos.schemes import Total, VideoModel, VideoUpdate
+from api.videos.schemes import Total, VideoModel, VideoUpdate, VideoList
 from config import SECRET
 from db.models import User, Video
 from db.session import get_async_session, get_redis_async_session
@@ -34,7 +34,6 @@ class MaxBodySizeException(Exception):
         self.body_len = body_len
 
 
-
 @videos_api.get("/my")
 async def my_videos(
         page_params: dict = Depends(pagination_params),
@@ -47,19 +46,18 @@ async def my_videos(
     return [await video_to_model_video(video, red) for video in res.scalars().all()]
 
 
-@videos_api.get("/total")
-async def get_total(db: AsyncSession = Depends(get_async_session)) -> Total:
-    total = await db.execute(select(sqlalchemy.func.count()).select_from(Video))
-    return Total(total=total.scalar())
-
-
 @videos_api.get("/")
-async def videos(page_params: dict = Depends(pagination_params),
-                 db: AsyncSession = Depends(get_async_session),
-                 red: redis.Redis = Depends(get_redis_async_session)) -> list[VideoModel]:
-    result = await db.execute(
+async def get_videos(page_params: dict = Depends(pagination_params),
+                     db: AsyncSession = Depends(get_async_session),
+                     red: redis.Redis = Depends(get_redis_async_session)) -> VideoList:
+    videos = await db.execute(
         select(Video).where(not Video.is_private).offset(page_params["offset"]).limit(page_params["limit"]))
-    return [await video_to_model_video(video, red) for video in result.scalars().all()]
+    total = await db.execute(
+        select(sqlalchemy.func.count()).select_from(Video).where(Video.is_private == False).offset(
+            page_params["offset"]).limit(page_params["limit"]))
+
+    return VideoList(videos=[await video_to_model_video(video, red) for video in videos.scalars().all()],
+                     total=total.scalar())
 
 
 @videos_api.post("/", status_code=status.HTTP_201_CREATED)
@@ -157,19 +155,21 @@ async def like(_id: uuid.UUID, red: redis.Redis = Depends(get_redis_async_sessio
 @videos_api.get("/my/likes")
 async def get_my_likes(red: redis.Redis = Depends(get_redis_async_session),
                        db: AsyncSession = Depends(get_async_session),
-                       user: User = Depends(fastapi_users.current_user(active=True))) -> list[VideoModel]:
+                       user: User = Depends(fastapi_users.current_user(active=True))) -> VideoList:
     likes = await red.smembers(RedisKeys.user_likes(user.id))
     res = (await db.execute(select(Video).where(Video.id.in_(likes)))).scalars().all()
-    return [await video_to_model_video(video, red) for video in res]
+    return VideoList(videos=[await video_to_model_video(video, red) for video in res],
+                     total=len(likes))
 
 
 @videos_api.get("/my/views")
 async def get_my_views(red: redis.Redis = Depends(get_redis_async_session),
                        db: AsyncSession = Depends(get_async_session),
-                       user: User = Depends(fastapi_users.current_user(active=True))) -> list[VideoModel]:
+                       user: User = Depends(fastapi_users.current_user(active=True))) -> VideoList:
     views = await red.smembers(RedisKeys.user_views(user.id))
     res = (await db.execute(select(Video).where(Video.id.in_(views)))).scalars().all()
-    return [await video_to_model_video(video, red) for video in res]
+    return VideoList(videos=[await video_to_model_video(video, red) for video in res],
+                     total=len(views))
 
 
 @videos_api.post("/{_id}/dislike")
@@ -250,4 +250,4 @@ async def video_to_model_video(video: Video, red: redis.Redis) -> VideoModel:
     )
 
 
-
+print()

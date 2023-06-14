@@ -25,3 +25,8 @@ class VideoUpdate(BaseModel):
     name: str
     description: Optional[str]
     is_private: Optional[bool]
+
+
+class VideoList(BaseModel):
+    videos: list[VideoModel]
+    total: int
