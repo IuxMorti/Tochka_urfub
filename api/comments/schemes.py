@@ -10,7 +10,7 @@ class CommentRead(BaseModel):
     video_id: uuid.UUID
     text: str
     published_date: datetime
-
+    username:str
 
 class CreateComment(BaseModel):
     text: str

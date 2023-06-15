@@ -18,7 +18,7 @@ comments_api = APIRouter(
 @comments_api.get("/for_video/{video_id}")
 async def get_comments(video_id: uuid.UUID,
                        db: AsyncSession = Depends(get_async_session)) -> list[CommentRead]:
-    return [comment_to_commentRead(comment)
+    return [await comment_to_commentRead(comment, db)
             for comment in (await db.execute(select(Comment).where(Comment.video_id == video_id))).scalars().all()]
 
 
@@ -35,9 +35,12 @@ async def add_comment(video_id: uuid.UUID,
     await db.commit()
 
 
-def comment_to_commentRead(comment: Comment) -> CommentRead:
+async def comment_to_commentRead(comment: Comment, db:AsyncSession) -> CommentRead:
+    username = (await db.execute(select(User.username).where(User.id == comment.user_id))).scalar()
+
     return CommentRead(id=comment.id,
                        text=comment.text,
                        video_id=comment.video_id,
                        user_id=comment.user_id,
-                       published_date=comment.published_date)
+                       published_date=comment.published_date,
+                       username=username)
