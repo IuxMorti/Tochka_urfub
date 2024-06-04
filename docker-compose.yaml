@@ -1,46 +1,62 @@
 version: "3.7"
 services:
-
-
   db:
     image: postgres:15-alpine
     restart: always
     env_file:
       - .env
-
+    ports:
+      - "5432:5432"
     volumes: 
       - db:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    networks:
+      - dev
 
   cache:
     image: redis:6.2-alpine
     restart: always
     command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASS}
-    volumes: 
+    volumes:
       - cache:/data
-
-
+    networks:
+      - dev
   urfube:
     build:
       context: .
+    volumes:
+      - ./api:/urfub/api
+      - ./main.py:/urfub/main.py
+      - ./config.py:/urfub/config.py
+      - ./migrations:/urfub/migrations
+
     env_file:
       - .env
     container_name: urfube
-    command: sh -c "alembic upgrade head && gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
+    command: sh -c "alembic upgrade head && gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker  --bind=0.0.0.0:10110"
     ports:
-      - 9999:8000
+      - "9999:10110"
     depends_on:
       - db
       - cache
+    networks:
+      - dev
 
   adminer:
     image: adminer
     restart: always
     ports:
       - 1234:8080
+    networks:
+      - dev
+
 
 volumes:
   db:
     driver: local
   cache:
     driver: local
+
+networks:
+  dev:
+    driver: bridge
